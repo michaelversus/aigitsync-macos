@@ -8,7 +8,10 @@ A formula is published only after its corresponding real release has been signed
 notarized, uploaded, and verified. There is no unsigned stable fallback and no
 placeholder formula. [Version 0.1.0](https://github.com/michaelversus/aigitsync-macos/releases/tag/v0.1.0)
 has been signed, notarized, published and verified as release assets. The checked-in
-formula is byte-identical to its published `aigitsync.rb` asset. Actual Homebrew
+formula derives from that release manifest and preserves its archive URL,
+archive/executable digests and signature/notarization requirements. The tap can
+carry Homebrew compatibility updates independently of the immutable release
+formula asset. Actual Homebrew
 installation, distinct-version upgrade and application workflow acceptance remain
 separate evidence.
 

@@ -59,6 +59,9 @@ jobs:
           set -euo pipefail
           brew tap michaelversus/aigitsync-macos "$GITHUB_WORKSPACE"
           test "$(git -C "$(brew --repo michaelversus/aigitsync-macos)" rev-parse HEAD)" = "$(git rev-parse HEAD)"
+          if brew help trust >/dev/null 2>&1; then
+            brew trust --formula michaelversus/aigitsync-macos/aigitsync
+          fi
           brew audit --strict --online michaelversus/aigitsync-macos/aigitsync
           brew info --json=v2 michaelversus/aigitsync-macos/aigitsync > "$RUNNER_TEMP/formula.json"
           python3 scripts/verify_release.py fetch "$RUNNER_TEMP/formula.json" "$RUNNER_TEMP/release-manifest.json"

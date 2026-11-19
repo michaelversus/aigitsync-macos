@@ -14,13 +14,17 @@ Requires macOS 13 Ventura or later on Apple silicon or Intel, and [Homebrew](htt
 
 ```sh
 brew tap michaelversus/aigitsync-macos https://github.com/michaelversus/aigitsync-macos.git
+if brew help trust >/dev/null 2>&1; then
+  brew trust --formula michaelversus/aigitsync-macos/aigitsync
+fi
 brew install michaelversus/aigitsync-macos/aigitsync
 aigitsync --version
 aigitsync --help
 ```
 
 The explicit tap URL is required because this repository does not use the
-`homebrew-` naming prefix. See [Homebrew's tap documentation](https://docs.brew.sh/Taps).
+`homebrew-` naming prefix. On Homebrew versions with a trust command, the step
+above trusts only this formula before loading it. See [Homebrew's tap documentation](https://docs.brew.sh/Taps).
 
 Installation only installs the CLI. Capture remains opt-in; installation does not
 enable hooks, background services, publishing, or telemetry.
