@@ -9,10 +9,10 @@ notarized, uploaded, and verified. There is no unsigned stable fallback and no
 placeholder formula. [Version 0.1.0](https://github.com/michaelversus/aigitsync-macos/releases/tag/v0.1.0)
 has been signed, notarized, published and verified as release assets. The checked-in
 formula derives from that release manifest and preserves its archive URL,
-archive/executable digests and signature/notarization requirements. The tap can
+archive/executable digests and strong signature checks. Mandatory online
+notarization remains in the separate CI verifier. The tap can
 carry Homebrew compatibility updates independently of the immutable release
-formula asset. Actual Homebrew
-installation, distinct-version upgrade and application workflow acceptance remain
+formula asset. Actual Homebrew installation, distinct-version upgrade and application workflow acceptance remain
 separate evidence.
 
 ## Public assets
@@ -46,8 +46,9 @@ Once a formula exists, CI uses fresh Apple silicon and Intel macOS runners to:
 1. Audit the checked-out formula and read its exact version, URL, and archive digest.
 2. Download the manifest for that version from this repository's release assets and
    require matching repository, version, archive URL, digest, and signing contract.
-3. Install and run the formula's Homebrew test.
-4. Compare the installed executable digest with the signed executable digest, require
+3. Install and run the formula's offline Homebrew test: exact binary digest and
+   strict all-architecture Developer ID Application signature, team and identifier.
+4. Outside the Homebrew sandbox, compare the installed executable digest with the signed executable digest, require
    both architecture slices, verify the Developer ID Application signature, team,
    identifier, hardened runtime, timestamp, and Apple's online notarization check.
 5. Run the installed CLI's version and help commands on each runner's native CPU.
@@ -61,3 +62,10 @@ CI installation checks do not establish a real upgrade between distinct released
 versions, preservation of existing user configuration, or application workflow
 acceptance. Those checks remain separate release evidence. A bare executable has
 no stapled ticket, so this distribution makes no fresh offline notarization promise.
+
+Homebrew's sandbox can deny access to Apple's syspolicy service even when the
+unchanged binary passes online notarization verification outside the sandbox.
+Formula install/test therefore perform offline cryptographic checks. The separate
+CI verifier must still pass Apple's full online notarization requirement after
+`brew test`; a successful offline formula test alone is not notarization
+acceptance. The sandbox is kept enabled and its policy is not widened.

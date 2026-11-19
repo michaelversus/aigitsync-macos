@@ -44,8 +44,11 @@ same version is not an upgrade.
 Published releases contain a universal macOS archive, checksums, a release
 manifest, and a generated formula. The executable must be signed with Developer ID
 Application and notarized by Apple. Homebrew verifies the archive checksum; this
-tap's CI also checks the installed executable's checksum and signature on Apple
-silicon and Intel. The online notarization check requires network access.
+formula's install/test check the original executable digest and its Developer ID
+Application signature offline inside Homebrew's sandbox. Mandatory CI then checks
+the installed binary and Apple's online notarization outside that sandbox on Apple
+silicon and Intel. Online notarization requires network access; `brew test` alone
+does not establish that acceptance.
 
 See [DISTRIBUTION.md](DISTRIBUTION.md) for the public release contract and checks.
 Report installation problems through this repository's
