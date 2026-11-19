@@ -2,10 +2,11 @@
 
 Public distribution metadata and Homebrew tap for the aigitsync command-line tool.
 
-**First release pending.** There is no installable formula or released binary yet.
-The commands below become available after a signed, notarized release and its
-verified formula are published. A passing bootstrap check does not mean installation
-or release acceptance has run.
+[Version 0.1.0](https://github.com/michaelversus/aigitsync-macos/releases/tag/v0.1.0)
+is available as a signed, notarized universal macOS binary. This tap contains its
+verified release formula. Publication and installation acceptance are separate:
+see [DISTRIBUTION.md](DISTRIBUTION.md) for the installation checks and remaining
+upgrade and application workflow acceptance.
 
 ## Install
 
@@ -36,7 +37,7 @@ same version is not an upgrade.
 
 ## Release verification
 
-Published releases will contain a universal macOS archive, checksums, a release
+Published releases contain a universal macOS archive, checksums, a release
 manifest, and a generated formula. The executable must be signed with Developer ID
 Application and notarized by Apple. Homebrew verifies the archive checksum; this
 tap's CI also checks the installed executable's checksum and signature on Apple
