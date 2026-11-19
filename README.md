@@ -5,8 +5,8 @@ Public distribution metadata and Homebrew tap for the aigitsync command-line too
 [Version 0.1.1](https://github.com/michaelversus/aigitsync-macos/releases/tag/v0.1.1)
 is available as a signed, notarized universal macOS binary. This tap contains its
 verified release formula. Publication and installation acceptance are separate:
-see [DISTRIBUTION.md](DISTRIBUTION.md) for the installation checks and remaining
-upgrade and application workflow acceptance.
+see [DISTRIBUTION.md](DISTRIBUTION.md) for the verified local upgrade and
+remaining platform/application acceptance.
 
 ## Install
 

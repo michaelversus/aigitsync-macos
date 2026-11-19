@@ -88,3 +88,20 @@ Formula install/test therefore perform offline cryptographic checks. The separat
 local validator must still pass Apple's full online notarization requirement after
 `brew test`; a successful offline formula test alone is not notarization
 acceptance. The sandbox is kept enabled and its policy is not widened.
+
+## Version 0.1.1 local acceptance
+
+On 19 November 2026, the signed universal 0.1.1 release was published after
+Accepted notarization and full online verification. The generated formula
+matched the published manifest and passed local strict/online Homebrew audit.
+On macOS 27.0.1 Apple silicon, a real 0.1.0_1 to 0.1.1 upgrade passed
+`brew test`, original binary/archive digest checks, all-architecture Developer
+ID requirements, hardened runtime/timestamp, online notarization, version/help
+and the global launcher. Existing checked hook/settings file hashes were
+unchanged. The distribution validator suite passed 12 tests.
+
+Native Intel and fresh clean-Mac installation were not exercised for this
+release. Universal slices and Apple notarization tickets were checked for both
+architectures; this does not establish execution on native Intel hardware.
+Real provider/application workflow acceptance remains separate. No CI/CD was
+used for signing, notarization, publication or this Homebrew upgrade.
