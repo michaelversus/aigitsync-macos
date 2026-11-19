@@ -1,2 +1,49 @@
-# aigitsync-macos
-Distribution repo for aigitsync for the macOS
+# aigitsync for macOS
+
+Public distribution metadata and Homebrew tap for the aigitsync command-line tool.
+
+**First release pending.** There is no installable formula or released binary yet.
+The commands below become available after a signed, notarized release and its
+verified formula are published. A passing bootstrap check does not mean installation
+or release acceptance has run.
+
+## Install
+
+Requires macOS 13 Ventura or later on Apple silicon or Intel, and [Homebrew](https://brew.sh).
+
+```sh
+brew tap michaelversus/aigitsync-macos https://github.com/michaelversus/aigitsync-macos.git
+brew install michaelversus/aigitsync-macos/aigitsync
+aigitsync --version
+aigitsync --help
+```
+
+The explicit tap URL is required because this repository does not use the
+`homebrew-` naming prefix. See [Homebrew's tap documentation](https://docs.brew.sh/Taps).
+
+Installation only installs the CLI. Capture remains opt-in; installation does not
+enable hooks, background services, publishing, or telemetry.
+
+## Update
+
+```sh
+brew update
+brew upgrade michaelversus/aigitsync-macos/aigitsync
+```
+
+An upgrade becomes available when a later release is published. Reinstalling the
+same version is not an upgrade.
+
+## Release verification
+
+Published releases will contain a universal macOS archive, checksums, a release
+manifest, and a generated formula. The executable must be signed with Developer ID
+Application and notarized by Apple. Homebrew verifies the archive checksum; this
+tap's CI also checks the installed executable's checksum and signature on Apple
+silicon and Intel. The online notarization check requires network access.
+
+See [DISTRIBUTION.md](DISTRIBUTION.md) for the public release contract and checks.
+Report installation problems through this repository's
+[issues](https://github.com/michaelversus/aigitsync-macos/issues). Include macOS version,
+CPU architecture, Homebrew version, command, and a redacted error message. Do not
+include credentials, session transcripts, or captured provider data.

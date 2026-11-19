@@ -1,0 +1,72 @@
+name: Public distribution
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-24.04
+    outputs:
+      formula: ${{ steps.status.outputs.formula }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Test distribution validators
+        run: python3 -m unittest discover -s tests -v
+      - name: Check distribution state
+        id: status
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -f Formula/aigitsync.rb ]]; then
+            echo 'formula=true' >> "$GITHUB_OUTPUT"
+            echo 'Formula present: macOS installation checks required.' >> "$GITHUB_STEP_SUMMARY"
+          else
+            if find Formula -type f -name '*.rb' -print -quit 2>/dev/null | grep -q .; then
+              echo 'Unexpected formula without Formula/aigitsync.rb' >&2
+              exit 1
+            fi
+            echo 'formula=false' >> "$GITHUB_OUTPUT"
+            echo 'First release pending. Bootstrap checks only; no release or Homebrew installation acceptance executed.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  homebrew:
+    needs: bootstrap
+    if: needs.bootstrap.outputs.formula == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, macos-15-intel]
+    runs-on: ${{ matrix.runner }}
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: '1'
+      HOMEBREW_NO_INSTALL_CLEANUP: '1'
+      HOMEBREW_NO_ANALYTICS: '1'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Tap the exact checkout and audit the formula
+        shell: bash
+        run: |
+          set -euo pipefail
+          brew tap michaelversus/aigitsync-macos "$GITHUB_WORKSPACE"
+          test "$(git -C "$(brew --repo michaelversus/aigitsync-macos)" rev-parse HEAD)" = "$(git rev-parse HEAD)"
+          brew audit --strict --online michaelversus/aigitsync-macos/aigitsync
+          brew info --json=v2 michaelversus/aigitsync-macos/aigitsync > "$RUNNER_TEMP/formula.json"
+          python3 scripts/verify_release.py fetch "$RUNNER_TEMP/formula.json" "$RUNNER_TEMP/release-manifest.json"
+      - name: Install, test, and verify the signed executable
+        shell: bash
+        run: |
+          set -euo pipefail
+          brew install michaelversus/aigitsync-macos/aigitsync
+          brew test michaelversus/aigitsync-macos/aigitsync
+          python3 scripts/verify_release.py installed "$RUNNER_TEMP/formula.json" "$RUNNER_TEMP/release-manifest.json" "$(brew --prefix michaelversus/aigitsync-macos/aigitsync)/bin/aigitsync"
+          echo 'Native installation, formula test, signed binary digest and online notarization checks passed. Distinct-version upgrade and application workflow acceptance remain separate.' >> "$GITHUB_STEP_SUMMARY"
