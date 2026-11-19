@@ -26,6 +26,14 @@ For version `VERSION`, tag `vVERSION` contains:
 
 The archive contains `bin/aigitsync` and its required version resource bundle,
 `bin/AIGitSync_AIGitSyncCLI.bundle`. It contains no application source or debug caches.
+Homebrew places these unchanged payload files together in `libexec` and exposes a
+shell wrapper in `bin` that executes `opt_libexec/aigitsync`. The stable `opt`
+target preserves executable paths saved by hooks across upgrades. The manifest's
+executable digest applies to the signed payload, not the generated wrapper.
+
+Homebrew package revision `1` delivers this launcher fix as `0.1.0_1` without
+changing the 0.1.0 binary version, archive, signature or manifest. Packaging
+revision metadata belongs to the tap formula, independently of binary releases.
 
 The JSON manifest declares `version`, `source_revision` (a provenance commit hash),
 `repository` (`michaelversus/aigitsync-macos`), `archive`, `sha256` (archive),
@@ -51,7 +59,10 @@ Once a formula exists, CI uses fresh Apple silicon and Intel macOS runners to:
 4. Outside the Homebrew sandbox, compare the installed executable digest with the signed executable digest, require
    both architecture slices, verify the Developer ID Application signature, team,
    identifier, hardened runtime, timestamp, and Apple's online notarization check.
-5. Run the installed CLI's version and help commands on each runner's native CPU.
+5. Run the signed payload's version/help commands and the actual global `PATH`
+   command on each runner's native CPU. Require the global command to resolve to
+   this installed prefix's wrapper, and reject a missing, wrong or crashing
+   launcher even when the direct payload succeeds.
 
 These checks require no source checkout or signing credentials. Signature validation
 uses Apple's trust chain as well as the manifest's expected team; checksums alone

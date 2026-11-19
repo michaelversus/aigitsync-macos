@@ -63,8 +63,17 @@ def run(*args):
     return result.stdout + result.stderr
 
 
-def verify_installed(binary, manifest):
+def verify_installed(binary, manifest, command=None):
     require(binary.is_file(), "installed executable missing")
+    if command is not None:
+        require(binary.resolve().parent.name == "libexec", "signed payload must be in libexec")
+        prefix = binary.resolve().parent.parent
+        wrapper = prefix / "bin/aigitsync"
+        require(command.is_file(), "global command missing")
+        require(wrapper.is_file() and command.resolve() == wrapper.resolve(),
+                "global command does not resolve to this installed prefix wrapper")
+        require(not command.parent.resolve().is_relative_to(prefix),
+                "global command must be outside the Cellar prefix")
     require(hashlib.sha256(binary.read_bytes()).hexdigest() == manifest["binary_sha256"],
             "Homebrew changed the signed executable digest")
     require(set(run("lipo", "-archs", str(binary)).split()) == {"arm64", "x86_64"},
@@ -87,10 +96,15 @@ def verify_installed(binary, manifest):
     require(re.search(r"(?<![\d.])" + re.escape(manifest["version"]) + r"(?![\d.])", output),
             "installed version mismatch")
     run(str(binary), "--help")
+    if command is not None:
+        output = run(str(command), "--version")
+        require(re.search(r"(?<![\d.])" + re.escape(manifest["version"]) + r"(?![\d.])", output),
+                "installed global command version mismatch")
+        run(str(command), "--help")
 
 
 def main():
-    require(len(sys.argv) in (4, 5), "usage: verify_release.py fetch|installed INFO MANIFEST [BINARY]")
+    require(len(sys.argv) in (4, 5, 6), "usage: verify_release.py fetch|installed INFO MANIFEST [BINARY [COMMAND]]")
     command, info_path, manifest_path = sys.argv[1:4]
     info = json.loads(Path(info_path).read_text())
     if command == "fetch":
@@ -103,10 +117,10 @@ def main():
         Path(manifest_path).write_text(json.dumps(manifest, indent=2) + "\n")
         print("Verified public release manifest against formula metadata")
     elif command == "installed":
-        require(len(sys.argv) == 5, "installed requires a binary")
+        require(len(sys.argv) in (5, 6), "installed requires a binary and optional global command")
         manifest = json.loads(Path(manifest_path).read_text())
         validate_metadata(info, manifest)
-        verify_installed(Path(sys.argv[4]), manifest)
+        verify_installed(Path(sys.argv[4]), manifest, Path(sys.argv[5]) if len(sys.argv) == 6 else None)
         print("Verified installed digest, universal slices, Developer ID, runtime, timestamp, notarization, version and help")
     else:
         raise ValueError("unknown command")

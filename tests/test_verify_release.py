@@ -110,5 +110,59 @@ class DistributionTests(unittest.TestCase):
                 self.assertEqual(run.call_count, 2)
 
 
+    def wrapped_install(self, root):
+        prefix = Path(root) / "Cellar/aigitsync/0.1.0"
+        (prefix / "libexec").mkdir(parents=True)
+        (prefix / "bin").mkdir()
+        binary = self.binary(prefix / "libexec")
+        wrapper = prefix / "bin/aigitsync"
+        wrapper.write_text("#!/bin/bash\nexec payload \"$@\"\n")
+        global_bin = Path(root) / "homebrew/bin"
+        global_bin.mkdir(parents=True)
+        command = global_bin / "aigitsync"
+        command.symlink_to(wrapper)
+        return binary, wrapper, command
+
+    def payload_results(self):
+        return ["arm64 x86_64", "", "flags=0x10000(runtime)\nTimestamp=Nov 19 2026",
+                "flags=0x10000(runtime)\nTimestamp=Nov 19 2026", "aigitsync 0.1.0", "help"]
+
+    def test_checks_actual_global_command_after_verified_payload(self):
+        with tempfile.TemporaryDirectory() as root:
+            binary, wrapper, command = self.wrapped_install(root)
+            with patch.object(release, "run", side_effect=self.payload_results() + ["aigitsync 0.1.0", "help"]) as run:
+                release.verify_installed(binary, self.manifest, command)
+                self.assertEqual(run.call_args_list[-2].args, (str(command), "--version"))
+                self.assertEqual(run.call_args_list[-1].args, (str(command), "--help"))
+                self.assertNotEqual(command, wrapper)
+                self.assertIn("--check-notarization", run.call_args_list[1].args)
+
+    def test_global_launcher_failure_is_not_masked_by_payload_success(self):
+        failures = [subprocess.CalledProcessError(-5, ["global", "--version"]),
+                    "aigitsync 0.2.0", subprocess.CalledProcessError(1, ["global", "--help"])]
+        for failure in failures:
+            with self.subTest(failure=str(failure)), tempfile.TemporaryDirectory() as root:
+                binary, _, command = self.wrapped_install(root)
+                suffix = ["aigitsync 0.1.0", failure] if isinstance(failure, subprocess.CalledProcessError) and failure.returncode == 1 else [failure]
+                with patch.object(release, "run", side_effect=self.payload_results() + suffix):
+                    with self.assertRaises((ValueError, subprocess.CalledProcessError)):
+                        release.verify_installed(binary, self.manifest, command)
+
+    def test_global_command_must_be_linked_to_verified_install_wrapper(self):
+        for invalid in ("missing", "wrong-target", "cellar-wrapper"):
+            with self.subTest(invalid=invalid), tempfile.TemporaryDirectory() as root:
+                binary, wrapper, command = self.wrapped_install(root)
+                if invalid == "cellar-wrapper":
+                    command = wrapper
+                else:
+                    command.unlink()
+                    if invalid == "wrong-target":
+                        command.symlink_to(binary)
+                with patch.object(release, "run") as run:
+                    with self.assertRaises(ValueError):
+                        release.verify_installed(binary, self.manifest, command)
+                    run.assert_not_called()
+
+
 if __name__ == "__main__":
     unittest.main()

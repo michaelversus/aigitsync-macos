@@ -75,5 +75,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 scripts/verify_release.py installed "$RUNNER_TEMP/formula.json" "$RUNNER_TEMP/release-manifest.json" "$(brew --prefix michaelversus/aigitsync-macos/aigitsync)/bin/aigitsync"
+          payload="$(brew --prefix michaelversus/aigitsync-macos/aigitsync)/libexec/aigitsync"
+          global_command="$(command -v aigitsync)"
+          test "$global_command" = "$(brew --prefix)/bin/aigitsync"
+          python3 scripts/verify_release.py installed "$RUNNER_TEMP/formula.json" "$RUNNER_TEMP/release-manifest.json" "$payload" "$global_command"
           echo 'Native installation, formula test, signed binary digest and online notarization checks passed. Distinct-version upgrade and application workflow acceptance remain separate.' >> "$GITHUB_STEP_SUMMARY"
