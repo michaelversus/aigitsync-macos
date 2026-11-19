@@ -6,14 +6,14 @@ are not distributed here.
 
 A formula is published only after its corresponding real release has been signed,
 notarized, uploaded, and verified. There is no unsigned stable fallback and no
-placeholder formula. [Version 0.1.0](https://github.com/michaelversus/aigitsync-macos/releases/tag/v0.1.0)
+placeholder formula. [Version 0.1.1](https://github.com/michaelversus/aigitsync-macos/releases/tag/v0.1.1)
 has been signed, notarized, published and verified as release assets. The checked-in
 formula derives from that release manifest and preserves its archive URL,
 archive/executable digests and strong signature checks. Mandatory online
-notarization remains in the separate CI verifier. The tap can
+notarization remains in the separate local installed validator. The tap can
 carry Homebrew compatibility updates independently of the immutable release
-formula asset. Actual Homebrew installation, distinct-version upgrade and application workflow acceptance remain
-separate evidence.
+formula asset. Homebrew installation, distinct-version upgrade and application
+workflow acceptance are recorded separately.
 
 ## Public assets
 
@@ -44,39 +44,64 @@ and `notarization` with `id` and `status` (`Accepted`). No credential belongs in
 Published version assets are immutable. A different executable requires a new
 release; an existing tag or checksum must not be silently replaced.
 
-## CI evidence
+## Local release verification
 
-With no formula, CI checks bootstrap consistency and the distribution validators.
-It explicitly reports that no release acceptance was executed.
+Release and development checks run locally. This tap has no automatic GitHub
+Actions workflow. Before publishing a formula, run its validators:
 
-Once a formula exists, CI uses fresh Apple silicon and Intel macOS runners to:
+```sh
+python3 -B -m unittest discover -s tests -v
+```
 
-1. Audit the checked-out formula and read its exact version, URL, and archive digest.
-2. Download the manifest for that version from this repository's release assets and
-   require matching repository, version, archive URL, digest, and signing contract.
-3. Install and run the formula's offline Homebrew test: exact binary digest and
-   strict all-architecture Developer ID Application signature, team and identifier.
-4. Outside the Homebrew sandbox, compare the installed executable digest with the signed executable digest, require
-   both architecture slices, verify the Developer ID Application signature, team,
-   identifier, hardened runtime, timestamp, and Apple's online notarization check.
-5. Run the signed payload's version/help commands and the actual global `PATH`
-   command on each runner's native CPU. Require the global command to resolve to
-   this installed prefix's wrapper, and reject a missing, wrong or crashing
-   launcher even when the direct payload succeeds.
+On each available native Mac, record the exact tap commit and:
 
-These checks require no source checkout or signing credentials. Signature validation
-uses Apple's trust chain as well as the manifest's expected team; checksums alone
+1. Audit the formula and read its exact version, URL and archive digest with
+   `brew info --json=v2`.
+2. Use `scripts/verify_release.py fetch INFO MANIFEST` to download and validate
+   the version's published manifest against the formula metadata.
+3. Install the formula on a clean machine, or perform a real `brew upgrade`
+   from the previous installed version. Record the prior version and snapshot
+   existing hook/configuration hashes before an upgrade.
+4. Run `brew test` for the offline signed-binary digest and Developer ID checks.
+5. Run `scripts/verify_release.py installed INFO MANIFEST PAYLOAD GLOBAL_COMMAND`
+   outside Homebrew's sandbox for universal slices, Developer ID, hardened
+   runtime, timestamp, online notarization, version and global launcher checks.
+6. After upgrade, compare existing hook/configuration hashes. Record the actual
+   native OS/CPU and version transition; report unavailable clean-Mac or Intel
+   coverage rather than inferring it from universal slices or emulation.
+
+These checks require no application source checkout or signing credentials.
+Signature validation uses Apple's trust chain as well as the manifest's expected
+team; checksums alone
 are not a substitute for signature validation. The manifest records accepted
-notarization, while CI independently checks the installed executable online.
+notarization; the local validator independently checks the installed executable
+online.
 
-CI installation checks do not establish a real upgrade between distinct released
-versions, preservation of existing user configuration, or application workflow
-acceptance. Those checks remain separate release evidence. A bare executable has
-no stapled ticket, so this distribution makes no fresh offline notarization promise.
+Local observations establish acceptance only for the actual machine and version
+transition checked. Real application/provider workflows remain separate evidence.
+A bare executable has no stapled ticket, so this distribution makes no fresh
+offline notarization promise.
 
 Homebrew's sandbox can deny access to Apple's syspolicy service even when the
 unchanged binary passes online notarization verification outside the sandbox.
 Formula install/test therefore perform offline cryptographic checks. The separate
-CI verifier must still pass Apple's full online notarization requirement after
+local validator must still pass Apple's full online notarization requirement after
 `brew test`; a successful offline formula test alone is not notarization
 acceptance. The sandbox is kept enabled and its policy is not widened.
+
+## Version 0.1.1 local acceptance
+
+On 19 November 2026, the signed universal 0.1.1 release was published after
+Accepted notarization and full online verification. The generated formula
+matched the published manifest and passed local strict/online Homebrew audit.
+On macOS 27.0.1 Apple silicon, a real 0.1.0_1 to 0.1.1 upgrade passed
+`brew test`, original binary/archive digest checks, all-architecture Developer
+ID requirements, hardened runtime/timestamp, online notarization, version/help
+and the global launcher. Existing checked hook/settings file hashes were
+unchanged. The distribution validator suite passed 12 tests.
+
+Native Intel and fresh clean-Mac installation were not exercised for this
+release. Universal slices and Apple notarization tickets were checked for both
+architectures; this does not establish execution on native Intel hardware.
+Real provider/application workflow acceptance remains separate. No CI/CD was
+used for signing, notarization, publication or this Homebrew upgrade.
