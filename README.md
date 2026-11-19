@@ -36,8 +36,10 @@ brew update
 brew upgrade michaelversus/aigitsync-macos/aigitsync
 ```
 
-An upgrade becomes available when a later release is published. Reinstalling the
-same version is not an upgrade.
+The `0.1.0_1` Homebrew package revision fixes the global launcher while retaining
+the same signed 0.1.0 executable. `brew upgrade` can apply that packaging revision;
+`aigitsync --version` remains `0.1.0`. Later binary releases and packaging revisions
+can each provide an upgrade. Reinstalling the same package revision is not an upgrade.
 
 ## Release verification
 
@@ -55,3 +57,8 @@ Report installation problems through this repository's
 [issues](https://github.com/michaelversus/aigitsync-macos/issues). Include macOS version,
 CPU architecture, Homebrew version, command, and a redacted error message. Do not
 include credentials, session transcripts, or captured provider data.
+
+The launcher is a Homebrew shell wrapper. The signed executable and its required
+resource bundle remain together in `libexec`; the wrapper executes the stable
+Homebrew `opt` path so installed hooks can survive later upgrades. Verification
+checks the signed payload and also launches the global command found on `PATH`.
