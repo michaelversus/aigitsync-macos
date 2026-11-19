@@ -2,7 +2,7 @@
 
 Public distribution metadata and Homebrew tap for the aigitsync command-line tool.
 
-[Version 0.1.0](https://github.com/michaelversus/aigitsync-macos/releases/tag/v0.1.0)
+[Version 0.1.1](https://github.com/michaelversus/aigitsync-macos/releases/tag/v0.1.1)
 is available as a signed, notarized universal macOS binary. This tap contains its
 verified release formula. Publication and installation acceptance are separate:
 see [DISTRIBUTION.md](DISTRIBUTION.md) for the installation checks and remaining
@@ -36,10 +36,10 @@ brew update
 brew upgrade michaelversus/aigitsync-macos/aigitsync
 ```
 
-The `0.1.0_1` Homebrew package revision fixes the global launcher while retaining
-the same signed 0.1.0 executable. `brew upgrade` can apply that packaging revision;
-`aigitsync --version` remains `0.1.0`. Later binary releases and packaging revisions
-can each provide an upgrade. Reinstalling the same package revision is not an upgrade.
+Version 0.1.1 improves Codex and Claude transcript ingestion and fixes private
+checkpoint retention during pruning. `brew upgrade` updates earlier versions,
+including the 0.1.0_1 packaging revision, to the new signed 0.1.1 executable.
+Reinstalling the same package version is not an upgrade.
 
 ## Release verification
 
@@ -47,12 +47,15 @@ Published releases contain a universal macOS archive, checksums, a release
 manifest, and a generated formula. The executable must be signed with Developer ID
 Application and notarized by Apple. Homebrew verifies the archive checksum; this
 formula's install/test check the original executable digest and its Developer ID
-Application signature offline inside Homebrew's sandbox. Mandatory CI then checks
-the installed binary and Apple's online notarization outside that sandbox on Apple
-silicon and Intel. Online notarization requires network access; `brew test` alone
-does not establish that acceptance.
+Application signature offline inside Homebrew's sandbox. The local release
+validator checks the installed binary and Apple's online notarization outside
+that sandbox on each available native Mac. Online notarization requires network
+access; `brew test` alone does not establish that acceptance.
 
-See [DISTRIBUTION.md](DISTRIBUTION.md) for the public release contract and checks.
+Build, signing, notarization, installation and upgrade checks run locally.
+No GitHub Actions workflow is required for publication. Record the actual native
+platforms checked and any remaining installation or upgrade coverage gaps. See
+[DISTRIBUTION.md](DISTRIBUTION.md) for the public release contract and checks.
 Report installation problems through this repository's
 [issues](https://github.com/michaelversus/aigitsync-macos/issues). Include macOS version,
 CPU architecture, Homebrew version, command, and a redacted error message. Do not
